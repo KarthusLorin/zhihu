@@ -8,7 +8,9 @@ class UsersCtl {
     }
 
     async findById(ctx) {
-        const user = await User.findById(ctx.params.id)
+        const {fields} = ctx.query
+        const selectFields = fields.split(';').filter(f => f).map(f => ' +' + f).join('')
+        const user = await User.findById(ctx.params.id).select(selectFields)
         if (!user) {
             ctx.throw(404, '用户不存在')
         }
@@ -40,7 +42,14 @@ class UsersCtl {
     async update(ctx) {
         ctx.verifyParams({
             name: {type: 'string', required: false},
-            password: {type: 'string', required: false}
+            password: {type: 'string', required: false},
+            avatar_url: {type: 'string', required: false},
+            gender: {type: 'string', required: false},
+            headline: {type: 'string', required: false},
+            location: {type: 'array', itemType: 'string', required: false},
+            business: {type: 'string', required: false},
+            employments: {type: 'string', itemType: 'object', required: false},
+            educations: {type: 'string', itemType: 'object', required: false}
         })
         const user = await User.findByIdAndUpdate(ctx.params.id, ctx.request.body)
         if (!user) {
@@ -72,6 +81,46 @@ class UsersCtl {
             expiresIn: '1d'
         })
         ctx.body = {token}
+    }
+
+    async listFollowing (ctx) {
+        const user = await User.findById(ctx.params.id).select('+following').populate('following')
+        if (!user) {
+            ctx.throw(404)
+        }
+        ctx.body = user.following
+    }
+
+    async listFollowers (ctx) {
+        const users = await User.find({following: ctx.params.id})
+        ctx.body = users
+    }
+
+    async checkUserExist(ctx) {
+        const user = await User.findById(ctx.params.id)
+        if (!user) {
+            ctx.throw(404, '用户不存在')
+        }
+        await next()
+    }
+
+    async follow(ctx) {
+        const me = await User.findById(ctx.state.user._id).select('+following')
+        if (!me.following.map(id => id.toString()).includes(ctx.params.id)) {
+            me.following.push(ctx.params.id)
+            me.save()
+        }
+        ctx.status = 204
+    }
+
+    async unfollow(ctx) {
+        const me = await User.findById(ctx.state.user._id).select('+following')
+        const index = me.following.map(id => id.toString()).indexOf(ctx.params.id)
+        if (index > -1) {
+            me.following.splice(index, 1)
+            me.save()
+        }
+        ctx.status = 204
     }
 }
 

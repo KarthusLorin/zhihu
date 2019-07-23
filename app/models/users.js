@@ -30,10 +30,12 @@ const userSchema = new Schema({
         type: String
     },
     location: {
-        type: [{type: String}]
+        type: [{type: String}],
+        select: false
     },
     business: {
-        type: String
+        type: String,
+        select: false
     },
     employments: {
         type: [{
@@ -43,7 +45,8 @@ const userSchema = new Schema({
             job: {
                 type: String
             }
-        }]
+        }],
+        select: false
     },
     educations: {
         type: [{
@@ -52,7 +55,15 @@ const userSchema = new Schema({
             diploma: {type: Number, enum: [1,2,3,4,5]},
             entrance_year: {type: Number},
             graduation_year: {type: Number}
-        }]
+        }],
+        select: false
+    },
+    following: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+        select: false
     }
 })
 
