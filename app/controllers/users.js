@@ -8,7 +8,7 @@ class UsersCtl {
     }
 
     async findById(ctx) {
-        const {fields} = ctx.query
+        const {fields = ''} = ctx.query
         const selectFields = fields.split(';').filter(f => f).map(f => ' +' + f).join('')
         const user = await User.findById(ctx.params.id).select(selectFields)
         if (!user) {
